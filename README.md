@@ -21,24 +21,72 @@ By requiring the gem, you get a few additional Step adapters registered with dry
 require "dry-transaction-extra"
 ```
 
+### `merge`
+
+If you're using keyword args as the arguments to your steps, you often want a
+step to add its output to those args, while keeping the original kwargs intact.
+
+ * If the output of the step is a Hash, then that hash is merged into the input.
+ * If the output of the step is not a Hash, then a key is inferred from the
+   step name. The name of the key can be overridden with the `as:` option.
+
+#### Merging Hash output
+
+```ruby
+merge :add_context
+
+# Input: { user: #<User id:42>, account: #<Account id:1> }
+def add_context(user:, **)
+  {
+    email: user.email,
+    token: UserToken.lookup(user)
+  }
+end
+# Output: { user: #<User id:42>, account: #<Account id:1>, email: "paul@myapp.example", token: "1234" }
+```
+
+#### Merging non-Hash output, inferring the key from the step name
+
+```ruby
+merge :user
+
+# Input: { id: 42 }
+def user(id:, **)
+  User.find(id)
+end
+# Output: { id: 42, user: #<User id:42> }
+```
+
+#### Merging non-Hash output, specifying the key explicitly
+
+```ruby
+merge :find_user, as: :current_user
+
+# Input: { id: 42 }
+def find_user(id:, **)
+  User.find(id)
+end
+# Output: { id: 42, current_user: #<User id:42> }
+```
+
 ### `tap` 
 
 A step that mimics Ruby's builtin [Kernel#tap](https://ruby-doc.org/3.1.2/Kernel.html#method-i-tap) method. If the step succeeds, the step output is ignored and the original input is returned. However, if the step fails, then that Failure is returned instead.
 
 ```ruby
-  tap :track_user
-  map :next_step
+tap :track_user
+map :next_step
 
-  def track_user(user)
-    response = Tracker.track(user_id: user.email)
-    return Failure(response.body) if response.status >= 400
-  end
+def track_user(user)
+  response = Tracker.track(user_id: user.email)
+  return Failure(response.body) if response.status >= 400
+end
 
-  def next_step(user)
-    # Normally, the return value if the previous step would be passed
-    # as the input to this step. In this case, we don't care, we want
-    # to keep going with the original input `user`.
-  end
+def next_step(user)
+  # Normally, the return value if the previous step would be passed
+  # as the input to this step. In this case, we don't care, we want
+  # to keep going with the original input `user`.
+end
 ```
 
 
