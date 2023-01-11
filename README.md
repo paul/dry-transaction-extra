@@ -1,5 +1,6 @@
 # Dry::Transaction::Extra
 
+Dry::Transaction comes with a limited set of steps. This gem defines a few more steps that are useful for getting the most out of Transactions.
 
 ## Installation
 
@@ -14,6 +15,31 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
+By requiring the gem, you get a few additional Step adapters registered with dry-transaction, and can begin using them immediately. 
+
+```ruby
+require "dry-transaction-extra"
+```
+
+### `tap` 
+
+A step that mimics Ruby's builtin [Kernel#tap](https://ruby-doc.org/3.1.2/Kernel.html#method-i-tap) method. If the step succeeds, the step output is ignored and the original input is returned. However, if the step fails, then that Failure is returned instead.
+
+```ruby
+  tap :track_user
+  map :next_step
+
+  def track_user(user)
+    response = Tracker.track(user_id: user.email)
+    return Failure(response.body) if response.status >= 400
+  end
+
+  def next_step(user)
+    # Normally, the return value if the previous step would be passed
+    # as the input to this step. In this case, we don't care, we want
+    # to keep going with the original input `user`.
+  end
+```
 
 
 ## Development
