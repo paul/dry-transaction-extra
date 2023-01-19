@@ -21,7 +21,17 @@ By requiring the gem, you get a few additional Step adapters registered with dry
 require "dry-transaction-extra"
 ```
 
-### `merge`
+### Additional Steps
+
+Dry::Transaction::Extra defines a few extra steps you can use:
+
+ * [merge][#merge] -- Merges the output of the step with the input args. Best used with keyword arguments.
+ * [tap][#tap] -- Similar to Ruby `Kernel#tap`, discards the return value of the step
+   and returns the original input. If the step fails, then returns the Failure
+   instead.
+ * [valid][#valid] -- Runs a Dry::Schema or Dry::Validation::Contract on the input, and transforms the validation Result to a Result monad.
+
+#### `merge`
 
 If you're using keyword args as the arguments to your steps, you often want a
 step to add its output to those args, while keeping the original kwargs intact.
@@ -30,7 +40,7 @@ step to add its output to those args, while keeping the original kwargs intact.
  * If the output of the step is not a Hash, then a key is inferred from the
    step name. The name of the key can be overridden with the `as:` option.
 
-#### Merging Hash output
+##### Merging Hash output
 
 ```ruby
 merge :add_context
@@ -45,7 +55,7 @@ end
 # Output: { user: #<User id:42>, account: #<Account id:1>, email: "paul@myapp.example", token: "1234" }
 ```
 
-#### Merging non-Hash output, inferring the key from the step name
+##### Merging non-Hash output, inferring the key from the step name
 
 ```ruby
 merge :user
@@ -57,7 +67,7 @@ end
 # Output: { id: 42, user: #<User id:42> }
 ```
 
-#### Merging non-Hash output, specifying the key explicitly
+##### Merging non-Hash output, specifying the key explicitly
 
 ```ruby
 merge :find_user, as: :current_user
@@ -69,7 +79,7 @@ end
 # Output: { id: 42, current_user: #<User id:42> }
 ```
 
-### `tap` 
+#### `tap` 
 
 A step that mimics Ruby's builtin [Kernel#tap](https://ruby-doc.org/3.1.2/Kernel.html#method-i-tap) method. If the step succeeds, the step output is ignored and the original input is returned. However, if the step fails, then that Failure is returned instead.
 
@@ -87,6 +97,74 @@ def next_step(user)
   # as the input to this step. In this case, we don't care, we want
   # to keep going with the original input `user`.
 end
+```
+
+#### `valid`
+
+Runs a Dry::Schema or Dry::Validation::Contract, either passed to the step
+directly, or returned from the step method. It runs the validator on the input
+arguments, and returns Success on the validator output, or the Failure with
+errors returned from the validator.
+
+```ruby
+valid :validate_params
+
+def validate_params(params)
+  Dry::Schema.Params do
+    required(:name).filled(:string)
+    required(:email).filled(:string)
+  end
+end
+```
+
+*This is essentially equivalent to:*
+
+```
+step :validate_params
+
+def validate_params(params)
+  Dry::Schema.Params do
+    required(:name).filled(:string)
+    required(:email).filled(:string)
+  end.call(params).to_monad
+end
+```
+
+You can also define the Schema/Contract elsewhere if you want to reuse it, and invoke it:
+
+```
+valid ParamsValidator
+```
+
+### Extensions
+
+#### Validation
+
+In addition to the [valid][#valid] step adapter, Dry::Transaction::Extra has
+support for an explicit "pre-flight" validation that runs as the first step. 
+
+```ruby
+class CreateUser
+  include Dry::Transaction
+  include Dry::Transaction::Extra
+  load_extensions :validation
+
+  validate do
+    params do
+      required(:name).filled(:string)
+      optional(:email).maybe(:string)
+    end
+  end
+
+  step :create_user
+end
+```
+
+This is useful if you want to, for example, run the transaction as an async background job, but want to first verify the arguments to the job before enqueueing it. If the job is going to fail anyways, why bother creating it in the first place?
+
+```ruby
+result = CreateUser.validator.new.call(params)
+CreateUserJob.perform_async(params) unless result.failure?
 ```
 
 

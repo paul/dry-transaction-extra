@@ -2,6 +2,9 @@
 
 require "dry/transaction/extra"
 
+require "dry-schema"
+require "dry-validation"
+
 Dir[File.join(File.dirname(__FILE__), "support/**/*.rb")].sort.each { |f| require f }
 
 RSpec.configure do |config|

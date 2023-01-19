@@ -1,0 +1,73 @@
+# frozen_string_literal: true
+
+module Dry
+  module Transaction
+    module Extra
+      module ValidationDSL
+        def self.extended(klass)
+          klass.extend Dry::Core::ClassAttributes
+          # The Dry::Validation Contract to run as the first step in the
+          # Transaction. This exposes it publicly, so you can run it outside
+          # the context of the Transction. This is useful if, for example, you
+          # want to run the transaction in a job, but want to check if the
+          # arguments are valid before enqueueing the job.
+          #
+          # @example
+          #
+          # class MyTransaction
+          #   validate do
+          #     params do
+          #       required(:name).filled(:string)
+          #     end
+          #   end
+          # end
+          #
+          # MyTransaction.validator.new.call(name: "Jane")
+          # # => #<Dry::Validation::Result{name: "Jane"} errors={}>
+          klass.defines :validator
+        end
+
+        # Allows you to declare a class-level validator, and run it as the
+        # first step of the Transaction.
+        #
+        # @example Define the validation inline
+        #
+        # class CreateUser
+        #   include Dry::Transaction
+        #   include Dry::Transaction::Extra
+        #   load_extensions :validation
+        #
+        #   validate do
+        #     params do
+        #       required(:name).filled(:string)
+        #       optional(:email).maybe(:string)
+        #     end
+        #   end
+        # end
+        #
+        # @example Reference a Validation defined elsewhere
+        #
+        # class NewUserContract < Dry::Validation::Contract
+        #   params do
+        #     required(:name).filled(:string)
+        #     optional(:email).maybe(:string)
+        #   end
+        # end
+        #
+        # class CreateUser
+        #   include Dry::Transaction
+        #   include Dry::Transaction::Extra
+        #   load_extensions :validation
+        #
+        #   validate NewUserContract
+        # end
+        #
+        def validate(contract = nil, &block)
+          validator(contract || Class.new(Dry::Validation::Contract, &block))
+
+          valid(validator.new, name: "validate")
+        end
+      end
+    end
+  end
+end

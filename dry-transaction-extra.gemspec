@@ -36,6 +36,9 @@ Gem::Specification.new do |spec|
   spec.add_dependency "dry-monads", "~> 1.3"
   spec.add_dependency "dry-transaction", "~> 0.15"
 
+  spec.add_development_dependency "dry-schema", "~> 1.10"
+  spec.add_development_dependency "dry-validation", "~> 1.8"
+
   # For more information and examples about making a new gem, check out our
   # guide at: https://bundler.io/guides/creating_gem.html
 end

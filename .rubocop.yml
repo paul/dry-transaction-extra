@@ -1,6 +1,31 @@
 AllCops:
   TargetRubyVersion: 2.6
 
+Layout/LineLength:
+  Max: 120
+
+Lint/AmbiguousBlockAssociation:
+  Exclude:
+    - "spec/**/*"  # `expect { }.to change { }` is fine
+
+Metrics/BlockLength:
+  Exclude:
+    - Gemfile
+    - Guardfile
+  AllowedMethods:
+    - configure
+    - context
+    - define
+    - describe
+    - factory
+    - it
+    - namespace
+    - specify
+    - task
+    - shared_examples_for
+    - shared_context
+    - feature
+
 Style/StringLiterals:
   Enabled: true
   EnforcedStyle: double_quotes
@@ -8,6 +33,3 @@ Style/StringLiterals:
 Style/StringLiteralsInInterpolation:
   Enabled: true
   EnforcedStyle: double_quotes
-
-Layout/LineLength:
-  Max: 120
