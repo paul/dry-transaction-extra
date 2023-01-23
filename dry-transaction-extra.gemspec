@@ -32,13 +32,10 @@ Gem::Specification.new do |spec|
   spec.executables = spec.files.grep(%r{\Aexe/}) { |f| File.basename(f) }
   spec.require_paths = ["lib"]
 
-  # Uncomment to register a new dependency of your gem
   spec.add_dependency "dry-monads", "~> 1.3"
   spec.add_dependency "dry-transaction", "~> 0.15"
 
+  spec.add_development_dependency "dry-container", "~> 0.7"
   spec.add_development_dependency "dry-schema", "~> 1.10"
   spec.add_development_dependency "dry-validation", "~> 1.8"
-
-  # For more information and examples about making a new gem, check out our
-  # guide at: https://bundler.io/guides/creating_gem.html
 end

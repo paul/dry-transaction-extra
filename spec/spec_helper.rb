@@ -2,6 +2,7 @@
 
 require "dry/transaction/extra"
 
+require "dry-container"
 require "dry-schema"
 require "dry-validation"
 

@@ -81,7 +81,10 @@ end
 
 #### `tap` 
 
-A step that mimics Ruby's builtin [Kernel#tap](https://ruby-doc.org/3.1.2/Kernel.html#method-i-tap) method. If the step succeeds, the step output is ignored and the original input is returned. However, if the step fails, then that Failure is returned instead.
+A step that mimics Ruby's builtin
+[Kernel#tap](https://ruby-doc.org/3.1.2/Kernel.html#method-i-tap) method. If
+the step succeeds, the step output is ignored and the original input is
+returned. However, if the step fails, then that Failure is returned instead.
 
 ```ruby
 tap :track_user
@@ -96,6 +99,38 @@ def next_step(user)
   # Normally, the return value if the previous step would be passed
   # as the input to this step. In this case, we don't care, we want
   # to keep going with the original input `user`.
+end
+```
+
+#### `use`
+
+Invokes another Transaction (or anything else `#call`-able), and merges the
+result. It can also lookup the item to invoke in a container, which allows it
+to be changed at runtime, or for tests.
+
+The output of the invoked item is merged with the input, following the same
+rules as the [`merge`][#merge] step.
+
+This also works well in conjunction with the [Class Callable][#class-callable]
+extension.
+
+```ruby
+use FindUser
+use AppContainer, :find_user
+use ->(id:, **) { User.find(id) }, as: "user"
+```
+
+*Note*: The Container-lookup form of this is functionally equivalent to the built-in Dry Container Dependency Inject that is a part of Dry-Transaction (but lacking the `merge` semantics. However, you may find this method to be more readable, particularly when combined with other step adapters with a similar structure.
+
+```ruby
+class CreateUser
+  step :validate, with: "validate"
+  step :create, with: "create"
+
+  # vs
+
+  use UserContainer, "validate"
+  use UserContainer, "create"
 end
 ```
 
@@ -167,6 +202,7 @@ result = CreateUser.validator.new.call(params)
 CreateUserJob.perform_async(params) unless result.failure?
 ```
 
+#### Class Callable
 
 ## Development
 

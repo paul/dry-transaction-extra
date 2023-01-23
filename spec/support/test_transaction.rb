@@ -9,6 +9,7 @@ RSpec.shared_context "test_transaction" do
       include Dry::Transaction::Extra
     end
     txn.load_extensions :validation
+    txn.load_extensions :class_callable
     stub_const "Test::Transaction", txn
   end
 

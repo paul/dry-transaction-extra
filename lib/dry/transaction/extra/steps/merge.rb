@@ -26,7 +26,10 @@ module Dry
         #       token: UserToken.lookup(user)
         #     }
         #   end
-        #   # Output: { user: #<User id:42>, account: #<Account id:1>, email: "paul@myapp.example", token: "1234" }
+        #   # Output: { user: #<User id:42>,
+        #               account: #<Account id:1>,
+        #               email: "paul@myapp.example",
+        #               token: "1234" }
         #
         # @example Merging non-Hash output, inferring the key from the step name
         #
