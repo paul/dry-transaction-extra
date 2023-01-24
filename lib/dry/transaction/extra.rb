@@ -6,6 +6,7 @@ require "dry/monads"
 require "dry/transaction"
 
 require_relative "extra/steps/tap"
+require_relative "extra/steps/maybe"
 require_relative "extra/steps/merge"
 require_relative "extra/steps/use"
 require_relative "extra/steps/valid"
@@ -17,8 +18,9 @@ module Dry
   module Transaction
     module Extra
       def self.included(klass)
-        klass.extend Extra::Steps::Valid::DSL
+        klass.extend Extra::Steps::Maybe::DSL
         klass.extend Extra::Steps::Use::DSL
+        klass.extend Extra::Steps::Valid::DSL
 
         klass.extend Dry::Core::Extensions
 

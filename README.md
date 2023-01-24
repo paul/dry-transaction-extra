@@ -171,6 +171,58 @@ You can also define the Schema/Contract elsewhere if you want to reuse it, and i
 valid ParamsValidator
 ```
 
+#### `maybe`
+
+Maybe combines the [`use`][#use] step with the [Validation
+extension][#validation]. Before attempting to run the provided transaction, it
+first runs its defined validator. If that validation passes, then it invokes
+the transaction. If the validation fails, however, then the transaction
+continues on, silently ignoring the failure. This is useful in several
+scenarios, like not running if there's insufficient data, or they've already
+been run.
+
+For example, when creating a user, if they provided an email address, we want
+to send a verification email. If they didn't provide an email, or we've already
+verified it, then we can skip that part. Given a `VerifyEmail` transaction with
+a `validation` block that requires an email address, and does something to
+check if we've already verified it, we can use a `maybe` to invoke it. If that
+validator fails, then we can ignore it and create the user anyway. 
+
+```ruby
+class VerifyEmail
+  include Dry::Transaction
+  include Dry::Transaction::Extra
+  load_extensions :validation, :class_callable
+
+  validate do
+    params do 
+      required(:email).filled(type?: EmailAddress)
+    end
+
+    rule(:email) do
+      !EmailValidation.exists?(value)
+    end
+  end
+
+  step :send_verification_email
+end
+
+class CreateUser
+  include Dry::Transaction
+  include Dry::Transaction::Extra
+  load_extensions :validation
+
+  validate do
+    params do 
+      optional(:email).filled(:string)
+    end
+  end
+
+  maybe VerifyEmail
+  step :create_user
+```
+
+
 ### Extensions
 
 #### Validation
@@ -195,7 +247,7 @@ class CreateUser
 end
 ```
 
-This is useful if you want to, for example, run the transaction as an async background job, but want to first verify the arguments to the job before enqueueing it. If the job is going to fail anyways, why bother creating it in the first place?
+This is useful if you want to, for example, run the transaction as an async background job, but want to first verify the arguments to the job before enqueueing it. If the job is going to fail anyway, why bother creating it in the first place?
 
 ```ruby
 result = CreateUser.validator.new.call(params)
@@ -203,6 +255,20 @@ CreateUserJob.perform_async(params) unless result.failure?
 ```
 
 #### Class Callable
+
+This is a nice shorthand to initialize and call a Transaction in a single method. If you don't need to pass any arguments to the initializer, then you can `#call` it directly on the class:
+
+```ruby
+MyTransaction.new.call(args)
+MyTransaction.call(args)
+```
+
+This is particularly useful when invoking transactions via the [`use`][#use] and [`maybe`][#maybe] steps:
+
+```
+use   MyTransaction
+maybe MyOptionalTransaction
+```
 
 ## Development
 

@@ -25,6 +25,9 @@ module Dry
           # MyTransaction.validator.new.call(name: "Jane")
           # # => #<Dry::Validation::Result{name: "Jane"} errors={}>
           klass.defines :validator
+
+          require "dry/validation"
+          Dry::Validation.load_extensions(:monads)
         end
 
         # Allows you to declare a class-level validator, and run it as the
