@@ -25,11 +25,18 @@ require "dry-transaction-extra"
 
 Dry::Transaction::Extra defines a few extra steps you can use:
 
- * [merge][#merge] -- Merges the output of the step with the input args. Best used with keyword arguments.
- * [tap][#tap] -- Similar to Ruby `Kernel#tap`, discards the return value of the step
+ * [merge](#merge) -- Merges the output of the step with the input args. Best
+   used with keyword arguments.
+ * [tap](#tap) -- Similar to Ruby `Kernel#tap`, discards the return value of the step
    and returns the original input. If the step fails, then returns the Failure
    instead.
- * [valid][#valid] -- Runs a Dry::Schema or Dry::Validation::Contract on the input, and transforms the validation Result to a Result monad.
+ * [valid](#valid) -- Runs a Dry::Schema or Dry::Validation::Contract on the
+   input, and transforms the validation Result to a Result monad.
+ * [use](#use) -- Invokes another transaction (or any other callable), and
+   merges the result.
+ * [maybe](#maybe) -- Optionally invokes another transaction by first
+   attempting to invoke the validator. If the validation fails, it continues to
+   the next step without failing.
 
 #### `merge`
 
@@ -173,8 +180,8 @@ valid ParamsValidator
 
 #### `maybe`
 
-Maybe combines the [`use`][#use] step with the [Validation
-extension][#validation]. Before attempting to run the provided transaction, it
+Maybe combines the [`use`]( #use ) step with the [Validation
+extension]( #validation ). Before attempting to run the provided transaction, it
 first runs its defined validator. If that validation passes, then it invokes
 the transaction. If the validation fails, however, then the transaction
 continues on, silently ignoring the failure. This is useful in several
@@ -227,7 +234,7 @@ class CreateUser
 
 #### Validation
 
-In addition to the [valid][#valid] step adapter, Dry::Transaction::Extra has
+In addition to the [valid]( #valid ) step adapter, Dry::Transaction::Extra has
 support for an explicit "pre-flight" validation that runs as the first step. 
 
 ```ruby
@@ -263,7 +270,7 @@ MyTransaction.new.call(args)
 MyTransaction.call(args)
 ```
 
-This is particularly useful when invoking transactions via the [`use`][#use] and [`maybe`][#maybe] steps:
+This is particularly useful when invoking transactions via the [`use`]( #use ) and [`maybe`]( #maybe ) steps:
 
 ```
 use   MyTransaction
