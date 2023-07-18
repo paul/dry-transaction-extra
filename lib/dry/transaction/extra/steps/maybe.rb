@@ -41,9 +41,13 @@ module Dry
                 txn = container[key] if key
                 raise NoValidatorError, txn unless txn.respond_to? :validator
 
-                result = txn.validator.new.call(*args).to_monad
-                result.bind { txn.call(*args) }
-                      .or { Success(*args) }
+                result = txn.validator.new.call(*args)
+                if result.failure?
+                  # Rails.logger.debug "Skipping #{txn} because of errors: #{result.errors.to_h}"
+                  return Success(*args)
+                end
+
+                txn.call(*args)
               end
             rescue NoMethodError => e
               raise e unless e.name == :name
