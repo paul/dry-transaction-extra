@@ -38,16 +38,16 @@ module Dry
             #
             # # => { user: #<User: id=1> }
             #
-            def use(txn_or_container, key = nil, as: nil)
+            def use(txn_or_container, key = nil, as: nil, **)
               if key
                 container = txn_or_container
-                method_name = as || "#{container.name}.#{key}".to_sym
+                method_name = as || :"#{container.name}.#{key}"
               else
                 txn = txn_or_container
                 method_name = as || txn.name.to_sym
               end
 
-              merge(method_name, as:)
+              merge(method_name, as:, **)
               define_method method_name do |*args|
                 txn = container[key] if key
                 txn.call(*args)
