@@ -13,6 +13,7 @@ require_relative "extra/steps/use"
 require_relative "extra/steps/valid"
 
 require_relative "extra/class_callable"
+require_relative "extra/perform_later"
 require_relative "extra/validation_dsl"
 
 module Dry
@@ -32,6 +33,10 @@ module Dry
 
         klass.register_extension :class_callable do
           klass.extend ClassCallable
+        end
+
+        klass.register_extension :perform_later do
+          klass.extend PerformLater
         end
       end
 
