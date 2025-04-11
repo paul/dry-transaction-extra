@@ -26,6 +26,45 @@ module Dry
           # # => #<Dry::Validation::Result{name: "Jane"} errors={}>
           klass.defines :validator
 
+          # Allows overriding the default validation contract class. This is useful if you want to
+          # use a different Contract class with a different configuration.
+          #
+          # @example
+          #
+          # module MyApp
+          #   module Types
+          #     include Dry.Types()
+          #
+          #     Container = Dry::Schema::TypeContainer.new
+          #     Container.register("params.email", String.constrained(format: /@/))
+          #   end
+          #
+          #   class Contract < Dry::Validation::Contract
+          #     config.types = Types::Container
+          #   end
+          # end
+          #
+          # module ApplicationTransaction
+          #   include Dry::Transaction
+          #   include Dry::Transaction::Extra
+          #
+          #   load_extensions :validation
+          #
+          #   validation_contract_class MyApp::Contract
+          # end
+          #
+          # class MyTransaction
+          #   include ApplicationTransaction
+          #
+          #   validate do
+          #     params do
+          #       # Now the custom `:email` type is available in this schema
+          #       required(:email).filled(:email)
+          #     end
+          #   end
+          # end
+          klass.defines :validation_contract_class
+
           require "dry/validation"
           Dry::Validation.load_extensions(:monads)
         end
@@ -65,8 +104,8 @@ module Dry
         #   validate NewUserContract
         # end
         #
-        def validate(contract = nil, &block)
-          validator(contract || Class.new(Dry::Validation::Contract, &block))
+        def validate(contract = nil, &)
+          validator(contract || Class.new(validation_contract_class || Dry::Validation::Contract, &))
 
           valid(validator.new, name: "validate")
         end
