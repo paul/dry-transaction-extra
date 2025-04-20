@@ -43,7 +43,9 @@ Dry::Transaction::Extra defines a few extra steps you can use:
 If you're using keyword args as the arguments to your steps, you often want a
 step to add its output to those args, while keeping the original kwargs intact.
 
- * If the output of the step is a Hash, then that hash is merged into the input.
+ * If the output of the step is a Hash, it is merged into the input
+   unless the `as:` option is provided, in which case the entire result
+   is wrapped under the given key before merging.
  * If the output of the step is not a Hash, then a key is inferred from the
    step name. The name of the key can be overridden with the `as:` option.
 
@@ -60,6 +62,21 @@ def add_context(user:, **)
   }
 end
 # Output: { user: #<User id:42>, account: #<Account id:1>, email: "paul@myapp.example", token: "1234" }
+```
+
+##### Merging Hash output, specifying the key
+
+```ruby
+merge :add_context, as: :context
+
+# Input: { user: #<User id:42>, account: #<Account id:1> }
+def add_context(user:, **)
+  {
+    email: user.email,
+    token: UserToken.lookup(user)
+  }
+end
+# Output: { user: #<User id:42>, account: #<Account id:1>, context: { email: "paul@myapp.example", token: "1234" } }
 ```
 
 ##### Merging non-Hash output, inferring the key from the step name
