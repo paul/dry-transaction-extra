@@ -12,7 +12,6 @@ require_relative "extra/steps/tap"
 require_relative "extra/steps/use"
 require_relative "extra/steps/valid"
 
-require_relative "extra/active_record_rescues"
 require_relative "extra/class_callable"
 require_relative "extra/perform_later"
 require_relative "extra/validation_dsl"
@@ -41,6 +40,7 @@ module Dry
         end
 
         klass.register_extension :active_record_rescues do
+          require_relative "extra/active_record_rescues"
           Dry::Transaction::Step.prepend(ActiveRecordRescues)
         end
       end
