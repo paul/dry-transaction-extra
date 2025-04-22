@@ -125,7 +125,21 @@ extension.
 use FindUser
 use AppContainer, :find_user
 use ->(id:, **) { User.find(id) }, as: "user"
+use LoadBillingProfile, build_input: :billing_profile_input
 ```
+
+You can optionally specify a `build_input:` method to prepare the input passed
+to the nested transaction, allowing for better separation of concerns. This is
+useful when the nested transaction expects a different shape than the current input.
+
+```ruby
+def billing_profile_input(user:, cart:, **)
+  { customer_id: user.billing_id, currency: cart.currency }
+end
+```
+
+This ensures that `LoadBillingProfile` receives only the relevant data, even
+if the outer transaction includes broader context.
 
 *Note*: The Container-lookup form of this is functionally equivalent to the built-in Dry Container Dependency Inject that is a part of Dry-Transaction (but lacking the `merge` semantics. However, you may find this method to be more readable, particularly when combined with other step adapters with a similar structure.
 

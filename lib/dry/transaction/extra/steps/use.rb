@@ -38,7 +38,21 @@ module Dry
             #
             # # => { user: #<User: id=1> }
             #
-            def use(txn_or_container, key = nil, as: nil, **)
+            # @example Using `build_input` to reshape the input for the nested transaction
+            #
+            # use LoadBillingProfile, build_input: :billing_profile_input
+            #
+            # def billing_profile_input(user:, cart:, **)
+            #   {
+            #     customer_id: user.billing_id,
+            #     currency: cart.currency
+            #   }
+            # end
+            #
+            # This allows LoadBillingProfile to receive only the relevant input,
+            # even if the outer transaction includes broader context.
+            #
+            def use(txn_or_container, key = nil, as: nil, build_input: nil, **)
               if key
                 container = txn_or_container
                 method_name = as || :"#{container.name}.#{key}"
@@ -49,6 +63,7 @@ module Dry
 
               merge(method_name, as:, **)
               define_method method_name do |*args|
+                args = [Callable.new(method(build_input.to_sym)).call(*args)] if build_input
                 txn = container[key] if key
                 txn.call(*args)
               end

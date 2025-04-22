@@ -24,7 +24,7 @@ module Dry
             # step :create_user
             # maybe VerifyEmail
             #
-            def maybe(txn_or_container, key = nil, as: nil, **)
+            def maybe(txn_or_container, key = nil, as: nil, build_input: nil, **)
               if key
                 container = txn_or_container
                 method_name = as || :"#{container.name}.#{key}"
@@ -35,6 +35,7 @@ module Dry
 
               merge(method_name, as:, **)
               define_method method_name do |*args|
+                args = [Callable.new(method(build_input.to_sym)).call(*args)] if build_input
                 txn = container[key] if key
                 txn_class = txn.is_a?(Class) ? txn : txn.class
                 raise NoValidatorError, txn unless txn_class.respond_to? :validator
