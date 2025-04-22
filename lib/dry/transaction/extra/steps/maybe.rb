@@ -41,8 +41,12 @@ module Dry
 
                 result = txn_class.validator.new.call(*args)
                 if result.failure?
-                  # publish(:maybe_failed, step_name: method_name, args:, value: result)
-                  Rails.logger.debug "Skipping #{txn} because of errors: #{result.errors.to_h}" if defined?(Rails)
+                  steps
+                    .detect { |step| step.name == method_name }
+                    .publish(:maybe_step_validation_failed,
+                             step_name: method_name,
+                             args:,
+                             value: result)
                   return Success(*args)
                 end
 

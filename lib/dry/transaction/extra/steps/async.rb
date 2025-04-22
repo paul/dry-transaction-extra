@@ -37,9 +37,17 @@ module Dry
 
                 if (validator = job&.validator)
                   result = validator.new.call(input)
-                  # If the validator failed, don't enqueue the job, but don't
-                  # also fail the step
-                  job.perform_later(**result.to_h) if result.success?
+                  # If the validator failed, don't enqueue the job, but don't fail the step
+                  if result.success?
+                    job.perform_later(**result.to_h)
+                  else
+                    steps
+                      .detect { |step| step.name == method_name }
+                      .publish(:async_step_validation_failed,
+                               step_name: method_name,
+                               args: input,
+                               value: result)
+                  end
                 else
                   job.perform_later(**input)
                 end

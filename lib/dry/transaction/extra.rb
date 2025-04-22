@@ -16,6 +16,9 @@ require_relative "extra/class_callable"
 require_relative "extra/perform_later"
 require_relative "extra/validation_dsl"
 
+Dry::Transaction::Step.register_event :maybe_step_validation_failed
+Dry::Transaction::Step.register_event :async_step_validation_failed
+
 module Dry
   module Transaction
     module Extra
