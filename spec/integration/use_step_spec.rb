@@ -34,6 +34,34 @@ RSpec.describe "Use Step" do
       expect(result).to eql(Success(name: "Jane", email: "jane@doe.com",
                                     OtherTransaction: "result"))
     end
+
+    describe "building a new input" do
+      let(:transaction) do
+        Class.new(Test::Transaction) do
+          use OtherTransaction, build_input: :build_other_input
+
+          private
+          def build_other_input(name:, email:)
+            { name:, email:, role: :admin }
+          end
+        end
+      end
+
+      it "passes modified input params" do
+        allow(other_transaction).to receive(:call)
+
+        result
+
+        expect(other_transaction)
+          .to have_received(:call)
+          .with(name: "Jane", email: "jane@doe.com", role: :admin)
+      end
+
+      it "merges the result of the other transaction" do
+        expect(result).to eql(Success(name: "Jane", email: "jane@doe.com",
+                                      OtherTransaction: "result"))
+      end
+    end
   end
 
   describe "invoking any other callable" do
