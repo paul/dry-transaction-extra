@@ -30,21 +30,25 @@ module Dry
 
         klass.extend Dry::Core::Extensions
 
+        if defined?(ActiveRecord)
+          klass.register_extension :active_record_rescues do
+            require_relative "extra/active_record_rescues"
+            Dry::Transaction::Step.prepend(ActiveRecordRescues)
+          end
+        end
+
+        if defined?(ActiveJob)
+          klass.register_extension :perform_later do
+            klass.extend PerformLater
+          end
+        end
+
         klass.register_extension :validation do
           klass.extend ValidationDSL
         end
 
         klass.register_extension :class_callable do
           klass.extend ClassCallable
-        end
-
-        klass.register_extension :perform_later do
-          klass.extend PerformLater
-        end
-
-        klass.register_extension :active_record_rescues do
-          require_relative "extra/active_record_rescues"
-          Dry::Transaction::Step.prepend(ActiveRecordRescues)
         end
       end
 
