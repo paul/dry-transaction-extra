@@ -28,6 +28,8 @@ module Dry
         end
 
         class ConfiguredJob
+          attr_reader :job_class, :transaction, :options
+
           def initialize(job_class, transaction, options = {})
             @job_class = job_class
             @transaction = transaction
@@ -35,6 +37,8 @@ module Dry
           end
 
           def perform_later(*args)
+            args.last.reverse_merge!(@options[:perform_with]) if @options[:perform_with]
+
             if validator
               result = validator.new.call(*args).to_monad
               return result unless result.success?
@@ -43,7 +47,7 @@ module Dry
             end
 
             Dry::Monads::Success(
-              transaction_job.new(transaction_class_name: @transaction.name, args:)
+              job_class.new(transaction_class_name: @transaction.name, args:)
                 .enqueue(@options)
             )
           end
