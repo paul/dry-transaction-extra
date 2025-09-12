@@ -17,18 +17,31 @@ RSpec.describe Dry::Transaction::Extra::Steps::Merge, :adapter do
         expect(result).to eql(Success({ answer: 42, result: "success" }))
       end
 
+      describe "hash output" do
+        let(:operation) { ->(_input) { { result: 'success' } } }
+        it "merges the hash with the input args" do
+          expect(result).to eql(Success({ answer: 42, result: "success" }))
+        end
+
+        describe "as: option" do
+          let(:options) { { step_name: "test", as: "my_key" } }
+          it "uses the alias as the key" do
+            expect(result).to eql(Success({ answer: 42, my_key: { result: "success" } }))
+          end
+        end
+      end
+
       describe "non-hash output" do
         let(:operation) { ->(_input) { "success" } }
         it "uses the step name as the key" do
           expect(result).to eql(Success({ answer: 42, test: "success" }))
         end
-      end
 
-      describe "as: option" do
-        let(:options) { { step_name: "test", as: "my_key" } }
-        let(:operation) { ->(_input) { "success" } }
-        it "uses the step name as the key" do
-          expect(result).to eql(Success({ answer: 42, my_key: "success" }))
+        describe "as: option" do
+          let(:options) { { step_name: "test", as: "my_key" } }
+          it "uses the alias as the key" do
+            expect(result).to eql(Success({ answer: 42, my_key: "success" }))
+          end
         end
       end
     end

@@ -8,7 +8,9 @@ module Dry
         # often want a step to add its output to those args, while keeping the
         # original kwargs intact.
         #
-        #  * If the output of the step is a Hash, then that hash is merged into the input.
+        #  * If the output of the step is a Hash, it is merged into the input
+        #    unless the `as:` option is provided, in which case the entire result
+        #    is wrapped under the given key before merging.
         #  * If the output of the step is not a Hash, then a key is inferred
         #    from the step name. The name of the key can be overridden with the
         #    `as:` option.
@@ -30,6 +32,21 @@ module Dry
         #               account: #<Account id:1>,
         #               email: "paul@myapp.example",
         #               token: "1234" }
+        #
+        # @example Merging Hash output, specifying the key
+        #
+        #   merge :add_context, as: :context
+        #
+        #   # Input: { user: #<User id:42>, account: #<Account id:1> }
+        #   def add_context(user:, **)
+        #     {
+        #       email: user.email,
+        #       token: UserToken.lookup(user)
+        #     }
+        #   end
+        #   # Output: { user: #<User id:42>,
+        #               account: #<Account id:1>,
+        #               context: { email: "paul@myapp.example", token: "1234" } }
         #
         # @example Merging non-Hash output, inferring the key from the step name
         #
@@ -64,12 +81,19 @@ module Dry
             return result if result.is_a?(Failure)
 
             value = result.is_a?(Success) ? result.value! : result
-            unless value.is_a?(Hash)
-              key = options[:as] || options[:step_name]
-              value = { key.to_sym => value }
-            end
 
-            Success((args[0] || {}).merge(value))
+            Success((args[0] || {}).merge(normalize_value(value:, options:)))
+          end
+
+          private
+          def normalize_value(value:, options:)
+            key = options[:as]&.to_sym
+            step_name = options[:step_name].to_sym
+
+            return { key => value } unless key.nil?
+            return { step_name => value } unless value.is_a?(Hash)
+
+            value
           end
         end
       end
